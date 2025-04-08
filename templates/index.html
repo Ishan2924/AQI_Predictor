@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AQI Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Air Quality Index Prediction</h1>
+
+        <form method="GET" action="/city">
+            <select name="city" required>
+                {% for city in cities %}
+                    <option value="{{ city }}"
+                        {% if selected_city == city %}selected{% endif %}>
+                        {{ city }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit">Load Data</button>
+        </form>
+
+        {% if selected_city %}
+        <div class="chart-container">
+            {{ graph_html|safe }}
+        </div>
+
+        <form id="prediction-form">
+            <h2>Predict AQI</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>PM2.5 (µg/m³)</label>
+                    <input type="number" name="PM2_5" value="{{ averages.PM2_5|default(0)|round(2) }}" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>PM10 (µg/m³)</label>
+                    <input type="number" name="PM10" value="{{ averages.PM10|default(0)|round(2) }}" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>NO2 (ppb)</label>
+                    <input type="number" name="NO2" value="{{ averages.NO2|default(0)|round(2) }}" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>NOx (ppb)</label>
+                    <input type="number" name="NOx" value="{{ averages.NOx|default(0)|round(2) }}" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>NH3 (ppb)</label>
+                    <input type="number" name="NH3" value="{{ averages.NH3|default(0)|round(2) }}" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>CO (ppm)</label>
+                    <input type="number" name="CO" value="{{ averages.CO|default(0)|round(2) }}" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>SO2 (ppb)</label>
+                    <input type="number" name="SO2" value="{{ averages.SO2|default(0)|round(2) }}" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>O3 (ppb)</label>
+                    <input type="number" name="O3" value="{{ averages.O3|default(0)|round(2) }}" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Toluene (ppb)</label>
+                    <input type="number" name="Toluene" value="{{ averages.Toluene|default(0)|round(2) }}" step="0.01" required>
+                </div>
+            </div>
+
+            <button type="submit">Predict AQI</button>
+        </form>
+
+        <div id="prediction-result" class="hidden">
+            <h3>Predicted AQI: <span id="aqi-value"></span></h3>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('prediction-form')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Get all form values
+            const formData = new FormData(e.target);
+            const data = {
+                "PM2.5": parseFloat(formData.get('PM2_5')),
+                "PM10": parseFloat(formData.get('PM10')),
+                "NO2": parseFloat(formData.get('NO2')),
+                "NOx": parseFloat(formData.get('NOx')),
+                "NH3": parseFloat(formData.get('NH3')),
+                "CO": parseFloat(formData.get('CO')),
+                "SO2": parseFloat(formData.get('SO2')),
+                "O3": parseFloat(formData.get('O3')),
+                "Toluene": parseFloat(formData.get('Toluene'))
+            };
+
+            try {
+                // Show loading state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Predicting...';
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.error) throw new Error(result.error);
+
+                // Show result
+                document.getElementById('aqi-value').textContent = result.predicted_aqi;
+                document.getElementById('prediction-result').classList.remove('hidden');
+
+            } catch (error) {
+                alert('Prediction failed: ' + error.message);
+                console.error('Prediction error:', error);
+            } finally {
+                // Reset button
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Predict AQI';
+            }
+        });
+    </script>
+</body>
+</html>
