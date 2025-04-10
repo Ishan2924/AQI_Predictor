@@ -25,7 +25,19 @@
         <div class="chart-container">
             {{ graph_html|safe }}
         </div>
-
+<br>
+        <div class="aqi-legend">
+            <h4>AQI Levels</h4>
+                <ul>
+                    <li><span class="aqi-color aqi-good"></span>0-50: Good</li>
+                    <li><span class="aqi-color aqi-moderate"></span>51-100: Moderate</li>
+                    <li><span class="aqi-color aqi-sensitive"></span>101-150: Dangerous for Sensitive Groups</li>
+                    <li><span class="aqi-color aqi-unhealthy"></span>151-200: Unhealthy</li>
+                    <li><span class="aqi-color aqi-very-unhealthy"></span>201-300: Very Unhealthy</li>
+                    <li><span class="aqi-color aqi-hazardous"></span>301-500: Hazardous</li>
+                </ul>
+        </div>
+<br><br>
         <form id="prediction-form">
             <h2>Predict AQI</h2>
 
@@ -84,7 +96,17 @@
         </form>
 
         <div id="prediction-result" class="hidden">
-            <h3>Predicted AQI: <span id="aqi-value"></span></h3>
+            <div class="result-card">
+                <h3>Prediction Results</h3>
+                <div class="result-row">
+                    <span class="result-label">Predicted AQI:</span>
+                    <span id="aqi-value" class="result-value"></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Category:</span>
+                    <span id="aqi-category" class="result-value"></span>
+                </div>
+            </div>
         </div>
         {% endif %}
     </div>
@@ -124,7 +146,12 @@
 
                 // Show result
                 document.getElementById('aqi-value').textContent = result.predicted_aqi;
+                document.getElementById('aqi-category').textContent = result.aqi_category;
+
+
+                // Show result
                 document.getElementById('prediction-result').classList.remove('hidden');
+
 
             } catch (error) {
                 alert('Prediction failed: ' + error.message);

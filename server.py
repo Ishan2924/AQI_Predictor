@@ -73,9 +73,12 @@ def city_data():
 
     # Get city data
     df = pd.read_sql(f'''
-        SELECT date, PM2_5, PM10, AQI 
+        SELECT date, AQI 
         FROM city_data_aqi_cleaned 
         WHERE city = "{city}"
+        AND (strftime('%Y', date) = '2020' 
+                 OR date LIKE '%2020%'
+                 OR substr(date, 1, 4) = '2020')
         ORDER BY date
     ''', conn)
 
@@ -98,7 +101,61 @@ def city_data():
     conn.close()
 
     # Create plot
-    fig = px.line(df, x='date', y=['PM2_5', 'PM10'], title=f'AQI for {city}')
+    fig = px.line(df, x='date', y='AQI',
+                  title=f'AQI Levels for {city}',
+                  labels={'AQI': 'AQI Value', 'date': 'Date'},
+                  line_shape='hv',
+                  template='plotly_white')
+
+    aqi_bands = [
+        (0, 50, 'Good', '#4CAF50'),  # Soft green
+        (51, 100, 'Moderate', '#FFEB3B'),  # Pale yellow
+        (101, 150, 'Sensitive', '#FF9800'),  # Muted orange
+        (151, 200, 'Unhealthy', '#F44336'),  # Soft red
+        (201, 300, 'Very Unhealthy', '#9C27B0'),  # Light purple
+        (301, 500, 'Hazardous', '#795548')  # Muted brown
+    ]
+
+    for y0, y1, label, color in aqi_bands:
+        fig.add_hrect(y0=y0, y1=y1,
+                      fillcolor=color,
+                      opacity=0.15,
+                      line_width=0,
+                      annotation_text=f'<b>{label}</b>',
+                      annotation_font_size=10,
+                      annotation_font_color="#333333",
+                      annotation_bgcolor="rgba(255,255,255,0.7)",
+                      annotation_position="top left")
+
+    fig.update_traces(
+        line=dict(color='#2196F3', width=2.5),  # Nice blue line
+        mode='lines+markers',
+        marker=dict(size=6, color='#2196F3')
+    )
+
+    fig.update_layout(
+        font_family="Arial, sans-serif",
+        plot_bgcolor='rgba(255,255,255,0.9)',
+        paper_bgcolor='rgba(255,255,255,0.9)',
+        title_font_size=18,
+        title_x=0.5,
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=12,
+            font_family="Arial"
+        ),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(0,0,0,0.05)',
+            linecolor='rgba(0,0,0,0.1)'
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(0,0,0,0.05)',
+            linecolor='rgba(0,0,0,0.1)'
+        )
+    )
+
     graph_html = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
 
     return render_template(
@@ -119,7 +176,32 @@ def predict():
         data = request.get_json()
         input_data = [data[col] for col in model_columns]
         prediction = float(model.predict([input_data])[0])
-        return jsonify({'predicted_aqi': round(prediction, 2)})
+        rounded_pred = round(prediction, 2)
+
+        if rounded_pred <= 50:
+            category = "Good"
+            description = "Air quality is satisfactory"
+        elif rounded_pred <= 100:
+            category = "Moderate"
+            description = "Acceptable quality"
+        elif rounded_pred <= 150:
+            category = "Unhealthy for Sensitive Groups"
+            description = "Sensitive people may experience effects"
+        elif rounded_pred <= 200:
+            category = "Unhealthy"
+            description = "Everyone may begin to experience effects"
+        elif rounded_pred <= 300:
+            category = "Very Unhealthy"
+            description = "Health alert: serious effects possible"
+        else:
+            category = "Hazardous"
+            description = "Health warning of emergency conditions"
+
+        return jsonify({
+            'predicted_aqi': rounded_pred,
+            'aqi_category': category,
+        })
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
