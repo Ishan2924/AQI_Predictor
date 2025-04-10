@@ -28,10 +28,10 @@ def get_db():
     return conn
 
 def init_db():
-    if not os.path.exists('dataset/city_data_aqi.csv'):
+    if not os.path.exists('dataset/city_data_aqi_cleaned.csv'):
         raise FileNotFoundError("CSV file not found")
 
-    df = pd.read_csv('dataset/city_data_aqi.csv')
+    df = pd.read_csv('dataset/city_data_aqi_cleaned.csv')
     df = df.rename(columns={
         'PM2.5': 'PM2_5',
         'City': 'city',
@@ -39,7 +39,7 @@ def init_db():
     })
 
     conn = get_db()
-    df.to_sql('city_data_aqi', conn, if_exists='replace', index=False)
+    df.to_sql('city_data_aqi_cleaned', conn, if_exists='replace', index=False)
     conn.close()
 
 
@@ -58,7 +58,7 @@ except Exception as e:
 @app.route('/')
 def home():
     conn = get_db()
-    cities = pd.read_sql("SELECT DISTINCT city FROM city_data_aqi", conn)['city'].tolist()
+    cities = pd.read_sql("SELECT DISTINCT city FROM city_data_aqi_cleaned", conn)['city'].tolist()
     conn.close()
     return render_template('index.html', cities=cities)
 
@@ -74,7 +74,7 @@ def city_data():
     # Get city data
     df = pd.read_sql(f'''
         SELECT date, PM2_5, PM10, AQI 
-        FROM city_data_aqi 
+        FROM city_data_aqi_cleaned 
         WHERE city = "{city}"
         ORDER BY date
     ''', conn)
@@ -91,7 +91,7 @@ def city_data():
                 AVG(SO2) as SO2,
                 AVG(O3) as O3,
                 AVG(Toluene) as Toluene
-            FROM city_data_aqi 
+            FROM city_data_aqi_cleaned 
             WHERE city = "{city}"
         ''', conn).iloc[0].to_dict()
 
