@@ -1,7 +1,7 @@
 This is An AQI preditor project
 I have taken data from Kaggle , firtly the original dataset (city_data) is preprocessed with excel itself and saved as city_data_aqi
 Then this dataset is loaded in Jupyter and detailed preprocessing is done to it, like null value handling, feature extraction and EDA
-Then this file is saved as City_data_aqi_preprocessed
+Then this file is saved as City_data_aqi_cleaned
 
 After doing the preprocessing, model is trained using
 1. Linear Regression
