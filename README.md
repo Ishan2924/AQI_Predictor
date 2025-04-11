@@ -23,4 +23,6 @@ Flask has several routes
 The repo contains an output folder that contains screenshot of how the prohect will look
 it also contains a json file that has the columns/features used by model to make predictions
 
+#ignore test.py it was created to test whether the model was taking inputs and able to predict or not
+
 
