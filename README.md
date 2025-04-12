@@ -20,7 +20,7 @@ Flask has several routes
 3. Asking the user to enter all the required parameters, to predict the AQI , (it will already be filled with average values of that city using sql)
 4. Feeding the values to the model and the prediction will be displayed
 
-The repo contains an output folder that contains screenshot of how the prohect will look
+The repo contains an output folder that contains screenshot of how the project will look
 it also contains a json file that has the columns/features used by model to make predictions
 
 "city_data_aqi_cleaned.csv" is saved as "aqi.db" by the flask for sql to use as its database, all the sql queries have been fetched from aqi.db only
